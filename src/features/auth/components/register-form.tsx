@@ -27,53 +27,57 @@ import {
 import Link from "next/link";
 
 import { Input } from "@/components/ui/input";
-// import {authClient} from "@/lib/auth-client"
 import { cn } from "@/lib/utils";
+import path from "path";
 import { authClient } from "@/lib/auth-client";
-import { on } from "events";
-import { ErrorContext } from "better-auth/react";
 
-const loginSchema = z.object({
-  email: z.email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+const registerSchema = z
+  .object({
+    email: z.email("Please enter a valid email address"),
+    password: z.string().min(1, "Password is required"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
-  const onSubmit = async (values: LoginFormValues) => {
-    await authClient.signIn.email(
-      {
+  const onSubmit = async (values: RegisterFormValues) => {
+    await authClient.signUp.email({
+        name: values.email,
         email: values.email,
         password: values.password,
-        callbackURL: "/",
-      },
-      {
-        onSuccess: () => {
-          router.push("/");
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-      }
-    );
-  };
+        callbackURL: "/"
+    }, {
+        onSuccess: ()=>{
+            router.push("/")
+        }, 
+        onError: (ctx)=>{
+            toast.error(ctx.error.message)
+        }
+    })
+
+};
   const isPending = form.formState.isSubmitting;
 
   return (
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Login to continue</CardDescription>
+          <CardTitle>Get Started</CardTitle>
+          <CardDescription>Create your account to get started</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -128,14 +132,31 @@ export function LoginForm() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="********"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <Button type="submit" disabled={isPending} className="w-full">
-                    Login
+                    Sign Up
                   </Button>
                 </div>
                 <div className="text-center text-sm">
-                  Don't have an account?{" "}
-                  <Link href="/signup" className="underline underline-offset-4">
-                    Sign up
+                  Already have an account?{" "}
+                  <Link href="/login" className="underline underline-offset-4">
+                    Log in
                   </Link>
                 </div>
               </div>
