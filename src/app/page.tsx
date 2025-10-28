@@ -25,6 +25,9 @@ export default function () {
       onSuccess: () => {
         toast.success("AI Job queued");
       },
+      onError: () =>{
+        toast.error("Something went wrong")
+      }
     })
   );
   return (
